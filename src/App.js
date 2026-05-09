@@ -4,6 +4,10 @@ import Screener from "./components/Screener";
 import Survey from "./components/Survey";
 import Dashboard from "./components/Dashboard";
 
+const MAX_RESPONSES = 150;
+const RESEARCHER_PASSWORD = "innerwear2026";
+const STORAGE_KEY = "cbc_submitted";
+
 export default function App() {
   const [tab, setTab] = useState("survey");
   const [stage, setStage] = useState("screener");
@@ -11,29 +15,36 @@ export default function App() {
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [alreadyDone, setAlreadyDone] = useState(false);
+  const [studyClosed, setStudyClosed] = useState(false);
 
-  // Check URL for ?dashboard param
   useEffect(() => {
     if (window.location.search.includes("dashboard")) setTab("dashboard");
+    if (localStorage.getItem(STORAGE_KEY)) setAlreadyDone(true);
   }, []);
 
-  // Load responses from Supabase
   useEffect(() => {
     async function load() {
       const { data, error } = await supabase
         .from("responses")
         .select("*")
         .order("created_at", { ascending: false });
-      if (!error && data) setResponses(data);
+      if (!error && data) {
+        setResponses(data);
+        if (data.length >= MAX_RESPONSES) setStudyClosed(true);
+      }
       setLoading(false);
     }
     load();
 
-    // Realtime subscription
     const channel = supabase
       .channel("responses")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "responses" }, payload => {
-        setResponses(prev => [payload.new, ...prev]);
+        setResponses(prev => {
+          const updated = [payload.new, ...prev];
+          if (updated.length >= MAX_RESPONSES) setStudyClosed(true);
+          return updated;
+        });
       })
       .subscribe();
 
@@ -41,6 +52,7 @@ export default function App() {
   }, []);
 
   async function handleComplete(choices) {
+    if (studyClosed) return;
     setSaving(true);
     const row = {
       respondent_id: respondent.id,
@@ -53,22 +65,61 @@ export default function App() {
       completed_at: new Date().toISOString()
     };
     await supabase.from("responses").insert([row]);
+    localStorage.setItem(STORAGE_KEY, "1");
     setSaving(false);
     setStage("done");
   }
 
+  async function handleClearData() {
+    const pwd = window.prompt("Enter researcher password to delete all data:");
+    if (pwd !== RESEARCHER_PASSWORD) { alert("Incorrect password."); return; }
+    const confirm = window.confirm("This will permanently delete all " + responses.length + " responses. Are you sure?");
+    if (!confirm) return;
+    await supabase.from("responses").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    setResponses([]);
+    setStudyClosed(false);
+    alert("All data cleared.");
+  }
+
+  const surveyContent = () => {
+    if (studyClosed) return (
+      <div style={{ maxWidth: 400, margin: "4rem auto", textAlign: "center", padding: "0 1rem" }}>
+        <div style={{ fontSize: 32, marginBottom: 16 }}>🔒</div>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 8 }}>Study closed</h2>
+        <p style={{ fontSize: 14, color: "#666", lineHeight: 1.7 }}>We have reached our target of {MAX_RESPONSES} responses. Thank you for your interest!</p>
+      </div>
+    );
+    if (alreadyDone) return (
+      <div style={{ maxWidth: 400, margin: "4rem auto", textAlign: "center", padding: "0 1rem" }}>
+        <div style={{ fontSize: 32, marginBottom: 16 }}>✓</div>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 8 }}>Already submitted</h2>
+        <p style={{ fontSize: 14, color: "#666", lineHeight: 1.7 }}>You have already completed this study from this device. Thank you for participating!</p>
+      </div>
+    );
+    if (stage === "screener") return <Screener onComplete={r => { setRespondent(r); setStage("survey"); }} />;
+    if (stage === "survey") return <Survey onComplete={handleComplete} />;
+    return (
+      <div style={{ maxWidth: 400, margin: "4rem auto", textAlign: "center", padding: "0 1rem" }}>
+        <div style={{ width: 56, height: 56, background: "#f0faf5", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem", fontSize: 24 }}>✓</div>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 8 }}>Thank you!</h2>
+        <p style={{ fontSize: 14, color: "#666", lineHeight: 1.7 }}>{saving ? "Saving your responses..." : "Your responses have been recorded. Thank you for participating!"}</p>
+      </div>
+    );
+  };
+
   return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", minHeight: "100vh", background: "#fafafa" }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
       <div style={{ borderBottom: "1px solid #ebebeb", background: "#fff", padding: "0 1rem" }}>
         <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ padding: "14px 0", fontSize: 13, fontWeight: 700, color: "#111" }}>
             Innerwear CBC Study
-            <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 500, background: "#f0faf5", color: "#0F6E56", padding: "2px 8px", borderRadius: 20 }}>LIVE</span>
+            <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 500, background: studyClosed ? "#fff3f3" : "#f0faf5", color: studyClosed ? "#c0392b" : "#0F6E56", padding: "2px 8px", borderRadius: 20 }}>
+              {studyClosed ? "CLOSED" : "LIVE"}
+            </span>
           </div>
           <div style={{ display: "flex", gap: 4 }}>
-            {[{ id: "survey", label: "Survey" }, { id: "dashboard", label: `Dashboard${responses.length > 0 ? ` (${responses.length})` : ""}` }].map(t => (
+            {[{ id: "survey", label: "Survey" }, { id: "dashboard", label: "Dashboard" + (responses.length > 0 ? " (" + responses.length + ")" : "") }].map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 style={{ padding: "8px 14px", border: "none", background: tab === t.id ? "#111" : "transparent", color: tab === t.id ? "#fff" : "#888", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                 {t.label}
@@ -77,21 +128,16 @@ export default function App() {
           </div>
         </div>
       </div>
-
       {loading ? (
-        <div style={{ textAlign: "center", padding: "4rem", color: "#aaa", fontSize: 13 }}>Loading…</div>
+        <div style={{ textAlign: "center", padding: "4rem", color: "#aaa", fontSize: 13 }}>Loading...</div>
       ) : tab === "dashboard" ? (
-        <Dashboard responses={responses.map(r => ({ ...r, choices: JSON.parse(r.choices) }))} />
-      ) : stage === "screener" ? (
-        <Screener onComplete={r => { setRespondent(r); setStage("survey"); }} />
-      ) : stage === "survey" ? (
-        <Survey onComplete={handleComplete} />
+        <Dashboard
+          responses={responses.map(r => ({ ...r, choices: JSON.parse(r.choices) }))}
+          onClearData={handleClearData}
+          maxResponses={MAX_RESPONSES}
+        />
       ) : (
-        <div style={{ maxWidth: 400, margin: "4rem auto", textAlign: "center", padding: "0 1rem" }}>
-          <div style={{ width: 56, height: 56, background: "#f0faf5", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem", fontSize: 24 }}>✓</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 8 }}>Thank you!</h2>
-          <p style={{ fontSize: 14, color: "#666", lineHeight: 1.7 }}>{saving ? "Saving your responses…" : "Your responses have been recorded. Thank you for participating!"}</p>
-        </div>
+        surveyContent()
       )}
     </div>
   );
