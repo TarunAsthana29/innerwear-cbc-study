@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { BRANDS, USPS, NCCS, PLATFORMS, BRAND_COLORS, TASKS } from "../data";
+import Analysis from "./Analysis";
 
 function Bar({ label, count, total, color }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -10,7 +12,7 @@ function Bar({ label, count, total, color }) {
       </div>
       <div style={{ height: 6, background: "#f0f0f0", borderRadius: 3 }}>
         <div style={{ height: 6, width: `${pct}%`, background: color || "#111", borderRadius: 3, transition: "width 0.6s" }} />
-      </div>
+      </div></> }
     </div>
   );
 }
@@ -25,7 +27,8 @@ function Stat({ label, value, sub }) {
   );
 }
 
-export default function Dashboard({ responses }) {
+export default function Dashboard({ responses, onClearData, maxResponses }) {
+  const [activeTab, setActiveTab] = useState("overview");
   const n = responses.length;
 
   if (n === 0) return (
@@ -80,14 +83,40 @@ export default function Dashboard({ responses }) {
     a.href = url; a.download = "cbc_responses.csv"; a.click();
   }
 
+  const progress = Math.round((n / maxResponses) * 100);
+
   return (
     <div style={{ padding: "1.5rem 1rem", maxWidth: 680, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, color: "#111" }}>Live results</h2>
-        <button onClick={exportCSV}
-          style={{ padding: "7px 14px", background: "#111", color: "#fff", border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-          Export CSV ↓
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={exportCSV}
+            style={{ padding: "7px 14px", background: "#111", color: "#fff", border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            Export CSV ↓
+          </button>
+          <button onClick={onClearData}
+            style={{ padding: "7px 14px", background: "transparent", color: "#c0392b", border: "1px solid #c0392b", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            Clear data
+          </button>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 6, marginBottom: "1rem" }}>
+        {[{id:"overview",label:"Overview"},{id:"analysis",label:"Part-worths & WTP"}].map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            style={{ padding: "7px 14px", border: "none", background: activeTab === t.id ? "#111" : "#f0f0f0", color: activeTab === t.id ? "#fff" : "#666", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#888", marginBottom: 4 }}>
+          <span>{n} of {maxResponses} responses collected</span>
+          <span>{progress}%</span>
+        </div>
+        <div style={{ height: 4, background: "#f0f0f0", borderRadius: 2 }}>
+          <div style={{ height: 4, width: progress + "%", background: progress >= 100 ? "#c0392b" : "#111", borderRadius: 2, transition: "width 0.5s" }} />
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: "1.5rem" }}>
@@ -124,7 +153,8 @@ export default function Dashboard({ responses }) {
         {PLATFORMS.map(p => <Bar key={p} label={p} count={platformBreakdown[p] || 0} total={n} color="#BA7517" />)}
       </div>
 
-      <div style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 10, padding: "1rem" }}>
+      {activeTab === "analysis" && <Analysis responses={responses} />}
+      {activeTab === "overview" && <><div style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 10, padding: "1rem" }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Price distribution of chosen options</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
           {[250, 450, 650, 850].map(price => {
