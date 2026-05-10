@@ -67,10 +67,9 @@ export default function App() {
     await supabase.from("responses").insert([row]);
     localStorage.setItem(STORAGE_KEY, "1");
 
-    // Trigger HB every 10 responses
-    const { data: countData } = await supabase.from("responses").select("id", { count: "exact", head: true });
-    const total = countData?.length || 0;
-    if (total % 10 === 0) {
+    // Trigger HB every 10 responses — use count metadata, not array length
+    const { count: total } = await supabase.from("responses").select("*", { count: "exact", head: true });
+    if (total && total % 10 === 0) {
       fetch("/api/run-hb", { method: "POST" }).catch(() => {});
     }
 
@@ -84,9 +83,10 @@ export default function App() {
     const confirm = window.confirm("This will permanently delete all " + responses.length + " responses. Are you sure?");
     if (!confirm) return;
     await supabase.from("responses").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase.from("hb_results").delete().neq("id", "non-existent");
     setResponses([]);
     setStudyClosed(false);
-    alert("All data cleared.");
+    alert("All data cleared — responses and analysis results.");
   }
 
   const surveyContent = () => {
