@@ -181,3 +181,4 @@ export default function Dashboard({ responses, onClearData, maxResponses }) {
     </div>
   );
 }
+      
