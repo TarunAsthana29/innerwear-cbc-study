@@ -6,7 +6,7 @@ const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY // service key for server-side writes
+  process.env.REACT_APP_SUPABASE_ANON_KEY
 );
 
 const TASKS = [
