@@ -66,6 +66,14 @@ export default function App() {
     };
     await supabase.from("responses").insert([row]);
     localStorage.setItem(STORAGE_KEY, "1");
+
+    // Trigger HB every 10 responses
+    const { data: countData } = await supabase.from("responses").select("id", { count: "exact", head: true });
+    const total = countData?.length || 0;
+    if (total % 10 === 0) {
+      fetch("/api/run-hb", { method: "POST" }).catch(() => {});
+    }
+
     setSaving(false);
     setStage("done");
   }
