@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BRANDS, USPS, NCCS, PLATFORMS, BRAND_COLORS, TASKS } from "../data";
-import Analysis from "./Analysis";
+import HBResults from "./HBResults";
 
 function Bar({ label, count, total, color }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -106,7 +106,7 @@ export default function Dashboard({ responses, onClearData, maxResponses }) {
       </div>
 
       <div style={{ display: "flex", gap: 6, marginBottom: "1.25rem" }}>
-        {[{ id: "overview", label: "Overview" }, { id: "analysis", label: "Part-worths & WTP" }].map(t => (
+        {[{ id: "overview", label: "Overview" }, { id: "analysis", label: "HB Part-worths & WTP" }].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
             style={{ padding: "7px 14px", border: "none", background: activeTab === t.id ? "#111" : "#f0f0f0", color: activeTab === t.id ? "#fff" : "#666", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
             {t.label}
@@ -115,7 +115,7 @@ export default function Dashboard({ responses, onClearData, maxResponses }) {
       </div>
 
       {activeTab === "analysis" ? (
-        <Analysis responses={responses} />
+        <HBResults />
       ) : (
         <>
           {n === 0 ? (
@@ -181,4 +181,3 @@ export default function Dashboard({ responses, onClearData, maxResponses }) {
     </div>
   );
 }
-      
