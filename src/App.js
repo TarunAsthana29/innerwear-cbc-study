@@ -92,14 +92,14 @@ export default function App() {
   }
 
   async function handleClearData() {
-    if (!isResearcher) return;
-    const ok = window.confirm("Permanently delete all " + responses.length + " responses and analysis results?");
+    const pwd = window.prompt("Enter researcher password to delete all data:");
+    if (pwd !== RESEARCHER_PASSWORD) { alert("Incorrect password."); return; }
+    const ok = window.confirm("Permanently delete all " + responses.length + " responses and analysis results? This cannot be undone.");
     if (!ok) return;
-    // Delete all responses (use gt id=0 as universal match for uuid)
     const { error: e1 } = await supabase.from("responses").delete().gte("created_at", "2000-01-01");
     const { error: e2 } = await supabase.from("hb_results").delete().eq("id", "latest");
-    if (e1) console.error("responses delete error:", e1);
-    if (e2) console.error("hb_results delete error:", e2);
+    if (e1) { alert("Delete failed: " + e1.message); console.error(e1); return; }
+    if (e2) console.error("hb_results:", e2);
     localStorage.removeItem(STORAGE_KEY);
     setResponses([]);
     setStudyClosed(false);
