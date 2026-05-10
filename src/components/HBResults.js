@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import { BRANDS, USPS, BRAND_COLORS } from "../data";
+const RATINGS_LIST = ["3.8★","3.9★","4.2★","4.5★"];
 
 const NCCS_LIST = ["NCCS A1", "NCCS A2", "NCCS A3", "NCCS B1"];
 const NCCS_COLORS = { "NCCS A1": "#185FA5", "NCCS A2": "#534AB7", "NCCS A3": "#1D9E75", "NCCS B1": "#D85A30" };
@@ -95,15 +96,15 @@ export default function HBResults() {
     setScenarios(prev => prev.map((s, idx) => idx === i ? { ...s, [key]: key === "price" ? +val : val } : s));
   }
 
-  if (loading) return <div style={{ textAlign: "center", padding: "3rem", color: "#aaa", fontSize: 13 }}>Loading HB results...</div>;
+  if (loading) return <div style={{ textAlign: "center", padding: "3rem", color: "#aaa", fontSize: 13 }}>Loading Pooled MNL results...</div>;
 
   if (!hbData) return (
     <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#aaa" }}>
       <div style={{ fontSize: 32, marginBottom: 12 }}>⚗️</div>
-      <div style={{ fontSize: 14, marginBottom: 16 }}>HB analysis hasn't run yet. Need 10+ responses.</div>
+      <div style={{ fontSize: 14, marginBottom: 16 }}>Pooled MNL analysis hasn't run yet. Need 10+ responses.</div>
       <button onClick={forceRun} disabled={running}
         style={{ padding: "10px 20px", background: "#111", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-        {running ? "Running..." : "Run now (force)"}
+        {running ? "Running..." : "Run analysis (force)"}
       </button>
     </div>
   );
@@ -114,6 +115,7 @@ export default function HBResults() {
 
   return (
     <div style={{ padding: "0 0 2rem" }}>
+      <div style={{ background:"#fff8e1", border:"1px solid #ffe082", borderRadius:8, padding:"10px 14px", fontSize:12, color:"#7a5800", marginBottom:"1rem" }}>⚠️ <strong>Pooled MNL via MCMC (not true HB)</strong> — All respondents pooled into one estimate. Individual-level utilities not available. Results are directional only.</div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
         <div style={{ fontSize: 12, color: "#888" }}>
@@ -122,7 +124,7 @@ export default function HBResults() {
         </div>
         <button onClick={forceRun} disabled={running}
           style={{ padding: "6px 12px", background: "transparent", border: "1px solid #e0e0e0", borderRadius: 6, fontSize: 11, color: "#666", cursor: "pointer" }}>
-          {running ? "Running..." : "↻ Rerun HB"}
+          {running ? "Running..." : "↻ Rerun analysis"}
         </button>
       </div>
 
@@ -173,7 +175,7 @@ export default function HBResults() {
               ))}
             </div>
             <div style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 10, padding: "1rem" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>USP WTP vs Moisture-Wicking</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Fabric/USP WTP vs Sweat Absorbent</div>
               {USPS.map((u, i) => (
                 <WTPBar key={u} label={u.split(" & ")[0]} value={model.uspWTP[u] || 0} color={["#1D9E75","#185FA5","#D85A30","#534AB7"][i]} />
               ))}
