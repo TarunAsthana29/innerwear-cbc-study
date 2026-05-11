@@ -64,11 +64,14 @@ export default function App() {
       respondent_id: respondent.id,
       age: +respondent.age,
       nccs: respondent.nccs,
+      nccs_raw: respondent.nccs_raw,
       tier: respondent.tier,
       platform: respondent.platform,
-      income: respondent.income,
       gender: respondent.gender,
       recency: respondent.recency,
+      education: respondent.education,
+      durables_count: respondent.durables_count,
+      durables_list: respondent.durables_list,
       choices: JSON.stringify(choices),
       completed_at: new Date().toISOString()
     };
