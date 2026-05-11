@@ -1,24 +1,23 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
-import { BRANDS, USPS, BRAND_COLORS } from "../data";
+import { BRANDS, USPS, FABRICS, BRAND_COLORS } from "../data";
 
 const NCCS_LIST = ["NCCS A1", "NCCS A2", "NCCS A3", "NCCS B1"];
 const NCCS_COLORS = { "NCCS A1": "#185FA5", "NCCS A2": "#534AB7", "NCCS A3": "#1D9E75", "NCCS B1": "#D85A30" };
 
 const DEFAULT_SCENARIOS = [
-  { brand: "Levi's",            price: 650, pack: "3 pcs", rating: "4.5★", usp: "Ultra-Soft & Skin-Friendly" },
-  { brand: "XYXX",              price: 450, pack: "3 pcs", rating: "4.2★", usp: "Moisture-Wicking & Quick Dry" },
-  { brand: "Dixcy Scott Alpha", price: 250, pack: "3 pcs", rating: "4.2★", usp: "4-Way Stretch & Snug Fit" },
-  { brand: "Lux Nitro",         price: 450, pack: "3 pcs", rating: "4.2★", usp: "Airy & Breathable Mesh" },
+  { brand: "Jockey",            price: 600, rating: "4.5★", fabric: "100% Cotton",    usp: "Ultra Breathable" },
+  { brand: "XYXX",              price: 450, rating: "4.2★", fabric: "Blended Cotton",  usp: "Sweat Absorbent" },
+  { brand: "Dixcy Scott Alpha", price: 300, rating: "4.2★", fabric: "100% Cotton",    usp: "Highly Stretchable" },
 ];
 
 function calcUtil(scenario, model) {
   if (!model) return 0;
   return (model.brandUtils[scenario.brand] || 0)
     + (model.uspUtils[scenario.usp] || 0)
-    + (model.priceCoef * ((scenario.price - 250) / 600))
-    + (model.packUtils[scenario.pack] || 0)
-    + (model.ratingUtils[scenario.rating] || 0);
+    + (model.fabricUtils[scenario.fabric] || 0)
+    + (model.ratingUtils[scenario.rating] || 0)
+    + (model.priceCoef * ((scenario.price - 300) / 500));
 }
 
 function simShares(scenarios, model) {
@@ -42,21 +41,7 @@ function WTPBar({ label, value, color }) {
         </span>
       </div>
       <div style={{ height: 5, background: "#f0f0f0", borderRadius: 3 }}>
-        <div style={{ height: 5, width: Math.min(Math.round((abs / 600) * 100), 100) + "%", background: color || "#111", borderRadius: 3 }} />
-      </div>
-    </div>
-  );
-}
-
-function ImportanceBar({ label, value }) {
-  return (
-    <div style={{ marginBottom: 6 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-        <span style={{ fontSize: 11, color: "#444" }}>{label}</span>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "#111" }}>{value}%</span>
-      </div>
-      <div style={{ height: 4, background: "#f0f0f0", borderRadius: 2 }}>
-        <div style={{ height: 4, width: value + "%", background: "#534AB7", borderRadius: 2 }} />
+        <div style={{ height: 5, width: Math.min(Math.round((abs / 500) * 100), 100) + "%", background: color || "#111", borderRadius: 3 }} />
       </div>
     </div>
   );
@@ -76,12 +61,10 @@ export default function HBResults() {
       setLoading(false);
     }
     load();
-
     const channel = supabase.channel("hb_results")
       .on("postgres_changes", { event: "*", schema: "public", table: "hb_results" }, payload => {
         if (payload.new) setHbData({ ...payload.new, results: JSON.parse(payload.new.results) });
       }).subscribe();
-
     return () => supabase.removeChannel(channel);
   }, []);
 
@@ -154,7 +137,7 @@ export default function HBResults() {
             <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>
               Attribute importance — {activeSegment === "overall" ? "All" : activeSegment}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8 }}>
               {Object.entries(model.importance).map(([k, v]) => (
                 <div key={k} style={{ textAlign: "center", background: "#f8f8f8", borderRadius: 8, padding: "10px 6px" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>{v}%</div>
@@ -173,14 +156,24 @@ export default function HBResults() {
               ))}
             </div>
             <div style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 10, padding: "1rem" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>USP WTP vs Moisture-Wicking</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>USP WTP vs Sweat Absorbent</div>
               {USPS.map((u, i) => (
-                <WTPBar key={u} label={u.split(" & ")[0]} value={model.uspWTP[u] || 0} color={["#1D9E75","#185FA5","#D85A30","#534AB7"][i]} />
+                <WTPBar key={u} label={u} value={model.uspWTP[u] || 0} color={["#1D9E75","#185FA5","#534AB7"][i]} />
               ))}
             </div>
           </div>
 
-          {/* NCCS comparison table — only show on overall */}
+          {/* Fabric WTP */}
+          <div style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 10, padding: "1rem", marginBottom: "1rem" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Fabric WTP vs 100% Cotton</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+              {FABRICS.map((f, i) => (
+                <WTPBar key={f} label={f} value={model.fabricWTP ? (model.fabricWTP[f] || 0) : 0} color={["#1D9E75","#185FA5","#534AB7"][i]} />
+              ))}
+            </div>
+          </div>
+
+          {/* NCCS comparison table */}
           {activeSegment === "overall" && (
             <div style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 10, padding: "1rem", marginBottom: "1rem", overflowX: "auto" }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Brand WTP by NCCS cohort (₹ premium vs XYXX)</div>
@@ -212,23 +205,21 @@ export default function HBResults() {
                   ))}
                 </tbody>
               </table>
-              <div style={{ fontSize: 11, color: "#aaa", marginTop: 8 }}>— = insufficient sample for this cohort (need 8+ respondents)</div>
+              <div style={{ fontSize: 11, color: "#aaa", marginTop: 8 }}>— = insufficient sample (need 8+ respondents)</div>
             </div>
           )}
 
           {/* Preference share simulator */}
           <div style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 10, padding: "1rem" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>
-              Preference share simulator
-            </div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>Preference share simulator</div>
             <div style={{ fontSize: 11, color: "#888", marginBottom: 12 }}>
-              Showing preference share for {activeSegment === "overall" ? "all respondents" : activeSegment} · Edit any cell to update
+              {activeSegment === "overall" ? "All respondents" : activeSegment} · Edit any cell to update
             </div>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
-                    {["Brand","Price","Pack","Rating","USP","Share"].map(h => (
+                    {["Brand","Price","Rating","Fabric","USP","Share"].map(h => (
                       <th key={h} style={{ padding: "6px 8px", textAlign: "left", color: "#888", fontWeight: 600, fontSize: 11 }}>{h}</th>
                     ))}
                   </tr>
@@ -245,13 +236,7 @@ export default function HBResults() {
                       <td style={{ padding: "5px 4px" }}>
                         <select value={s.price} onChange={e => updateScenario(i, "price", e.target.value)}
                           style={{ fontSize: 11, border: "1px solid #e0e0e0", borderRadius: 4, padding: "3px", background: "#fff" }}>
-                          {[250,450,650,850].map(p => <option key={p} value={p}>₹{p}</option>)}
-                        </select>
-                      </td>
-                      <td style={{ padding: "5px 4px" }}>
-                        <select value={s.pack} onChange={e => updateScenario(i, "pack", e.target.value)}
-                          style={{ fontSize: 11, border: "1px solid #e0e0e0", borderRadius: 4, padding: "3px", background: "#fff" }}>
-                          {["2 pcs","3 pcs","5 pcs"].map(p => <option key={p}>{p}</option>)}
+                          {[300,450,600,800].map(p => <option key={p} value={p}>₹{p}</option>)}
                         </select>
                       </td>
                       <td style={{ padding: "5px 4px" }}>
@@ -261,11 +246,15 @@ export default function HBResults() {
                         </select>
                       </td>
                       <td style={{ padding: "5px 4px" }}>
+                        <select value={s.fabric} onChange={e => updateScenario(i, "fabric", e.target.value)}
+                          style={{ fontSize: 11, border: "1px solid #e0e0e0", borderRadius: 4, padding: "3px", background: "#fff" }}>
+                          {FABRICS.map(f => <option key={f}>{f}</option>)}
+                        </select>
+                      </td>
+                      <td style={{ padding: "5px 4px" }}>
                         <select value={s.usp} onChange={e => updateScenario(i, "usp", e.target.value)}
                           style={{ fontSize: 11, border: "1px solid #e0e0e0", borderRadius: 4, padding: "3px", background: "#fff" }}>
-                          {["Moisture-Wicking & Quick Dry","Airy & Breathable Mesh","Ultra-Soft & Skin-Friendly","4-Way Stretch & Snug Fit"].map(u => (
-                            <option key={u} value={u}>{u.split(" & ")[0]}</option>
-                          ))}
+                          {USPS.map(u => <option key={u}>{u}</option>)}
                         </select>
                       </td>
                       <td style={{ padding: "5px 8px" }}>

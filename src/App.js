@@ -61,6 +61,8 @@ export default function App() {
       tier: respondent.tier,
       platform: respondent.platform,
       income: respondent.income,
+      gender: respondent.gender,
+      recency: respondent.recency,
       choices: JSON.stringify(choices),
       completed_at: new Date().toISOString()
     };

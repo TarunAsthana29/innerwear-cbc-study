@@ -57,7 +57,7 @@ export default function Dashboard({ responses, onClearData, maxResponses }) {
   });
 
   function exportCSV() {
-    const rows = [["respondent_id","age","nccs","tier","platform","task","option","brand","price","pack","rating","usp"]];
+    const rows = [["respondent_id","age","nccs","tier","platform","task","option","brand","price","rating","fabric","usp"]];
     responses.forEach(r => {
       r.choices.forEach((c, ti) => {
         if (c === null) return;
@@ -65,7 +65,7 @@ export default function Dashboard({ responses, onClearData, maxResponses }) {
           rows.push([r.id, r.age, r.nccs, r.tier, r.platform, ti + 1, "none", "", "", "", "", ""]);
         } else {
           const opt = TASKS[ti][c];
-          rows.push([r.id, r.age, r.nccs, r.tier, r.platform, ti + 1, String.fromCharCode(65 + c), opt.b, opt.p, opt.k, opt.r, opt.u]);
+          rows.push([r.id, r.age, r.nccs, r.tier, r.platform, ti + 1, String.fromCharCode(65 + c), opt.b, opt.p, opt.r, opt.f, opt.u]);
         }
       });
     });
@@ -139,7 +139,7 @@ export default function Dashboard({ responses, onClearData, maxResponses }) {
                 </div>
                 <div style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 10, padding: "1rem" }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>USP preference</div>
-                  {USPS.map((u, i) => <Bar key={u} label={u.split(" & ")[0]} count={uspCounts[u]} total={totalChoices} color={["#1D9E75","#185FA5","#534AB7"][i]} />)}
+                  {USPS.map((u, i) => <Bar key={u} label={u} count={uspCounts[u]} total={totalChoices} color={["#1D9E75","#185FA5","#534AB7"][i]} />)}
                 </div>
               </div>
 
