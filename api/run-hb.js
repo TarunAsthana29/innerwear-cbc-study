@@ -1,7 +1,3 @@
-// api/run-hb.js — Vercel Serverless Function
-// Called automatically when response count hits multiple of 10
-// Runs HB-approximation via MCMC, stores results in Supabase
-
 const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
@@ -10,42 +6,50 @@ const supabase = createClient(
 );
 
 const TASKS = [
-  [{b:"Dixcy Scott Alpha",p:650,k:"3 pcs",r:"4.5★",u:"Ultra-Soft & Skin-Friendly"},{b:"XYXX",p:450,k:"5 pcs",r:"3.9★",u:"Ultra-Soft & Skin-Friendly"},{b:"Levi's",p:250,k:"3 pcs",r:"4.5★",u:"Airy & Breathable Mesh"}],
-  [{b:"Lux Nitro",p:850,k:"3 pcs",r:"4.5★",u:"4-Way Stretch & Snug Fit"},{b:"Levi's",p:250,k:"5 pcs",r:"4.2★",u:"Moisture-Wicking & Quick Dry"},{b:"XYXX",p:450,k:"5 pcs",r:"4.2★",u:"Ultra-Soft & Skin-Friendly"}],
-  [{b:"Lux Nitro",p:450,k:"3 pcs",r:"4.2★",u:"Ultra-Soft & Skin-Friendly"},{b:"Levi's",p:250,k:"2 pcs",r:"3.9★",u:"Moisture-Wicking & Quick Dry"},{b:"XYXX",p:850,k:"2 pcs",r:"4.2★",u:"Moisture-Wicking & Quick Dry"}],
-  [{b:"Dixcy Scott Alpha",p:650,k:"2 pcs",r:"4.5★",u:"Moisture-Wicking & Quick Dry"},{b:"Levi's",p:850,k:"3 pcs",r:"3.9★",u:"Ultra-Soft & Skin-Friendly"},{b:"Lux Nitro",p:450,k:"2 pcs",r:"3.9★",u:"4-Way Stretch & Snug Fit"}],
-  [{b:"Levi's",p:450,k:"5 pcs",r:"4.2★",u:"Airy & Breathable Mesh"},{b:"XYXX",p:650,k:"2 pcs",r:"4.2★",u:"Airy & Breathable Mesh"},{b:"Lux Nitro",p:250,k:"2 pcs",r:"4.2★",u:"Moisture-Wicking & Quick Dry"}],
-  [{b:"Dixcy Scott Alpha",p:850,k:"2 pcs",r:"4.5★",u:"Ultra-Soft & Skin-Friendly"},{b:"XYXX",p:650,k:"3 pcs",r:"3.9★",u:"4-Way Stretch & Snug Fit"},{b:"Lux Nitro",p:250,k:"2 pcs",r:"3.9★",u:"Airy & Breathable Mesh"}],
-  [{b:"Levi's",p:650,k:"5 pcs",r:"4.5★",u:"Moisture-Wicking & Quick Dry"},{b:"Dixcy Scott Alpha",p:450,k:"3 pcs",r:"4.2★",u:"4-Way Stretch & Snug Fit"},{b:"XYXX",p:250,k:"3 pcs",r:"3.9★",u:"Ultra-Soft & Skin-Friendly"}],
-  [{b:"Dixcy Scott Alpha",p:650,k:"5 pcs",r:"4.2★",u:"Airy & Breathable Mesh"},{b:"Lux Nitro",p:850,k:"2 pcs",r:"4.5★",u:"Moisture-Wicking & Quick Dry"},{b:"XYXX",p:450,k:"3 pcs",r:"3.9★",u:"4-Way Stretch & Snug Fit"}],
-  [{b:"Dixcy Scott Alpha",p:650,k:"5 pcs",r:"4.5★",u:"Ultra-Soft & Skin-Friendly"},{b:"Lux Nitro",p:450,k:"5 pcs",r:"4.5★",u:"Airy & Breathable Mesh"},{b:"Levi's",p:850,k:"5 pcs",r:"3.9★",u:"Ultra-Soft & Skin-Friendly"}],
-  [{b:"Levi's",p:250,k:"2 pcs",r:"4.5★",u:"Ultra-Soft & Skin-Friendly"},{b:"XYXX",p:850,k:"2 pcs",r:"4.5★",u:"4-Way Stretch & Snug Fit"},{b:"Lux Nitro",p:650,k:"5 pcs",r:"4.5★",u:"Airy & Breathable Mesh"}],
-  [{b:"Lux Nitro",p:850,k:"5 pcs",r:"4.2★",u:"4-Way Stretch & Snug Fit"},{b:"Dixcy Scott Alpha",p:450,k:"3 pcs",r:"3.9★",u:"4-Way Stretch & Snug Fit"},{b:"XYXX",p:250,k:"2 pcs",r:"3.9★",u:"Airy & Breathable Mesh"}],
-  [{b:"Dixcy Scott Alpha",p:450,k:"3 pcs",r:"4.2★",u:"Moisture-Wicking & Quick Dry"},{b:"XYXX",p:850,k:"2 pcs",r:"4.2★",u:"Airy & Breathable Mesh"},{b:"Levi's",p:250,k:"5 pcs",r:"3.9★",u:"4-Way Stretch & Snug Fit"}]
+  [{b:"Jockey",p:450,r:"4.5★",f:"100% Cotton",u:"Ultra Breathable"},{b:"XYXX",p:600,r:"3.9★",f:"Blended Cotton",u:"Sweat Absorbent"},{b:"Dixcy Scott Alpha",p:300,r:"3.9★",f:"Modal",u:"Highly Stretchable"}],
+  [{b:"XYXX",p:800,r:"4.2★",f:"Blended Cotton",u:"Highly Stretchable"},{b:"Dixcy Scott Alpha",p:600,r:"4.2★",f:"Modal",u:"Highly Stretchable"},{b:"Jockey",p:300,r:"4.5★",f:"100% Cotton",u:"Highly Stretchable"}],
+  [{b:"XYXX",p:300,r:"3.9★",f:"Blended Cotton",u:"Ultra Breathable"},{b:"Jockey",p:800,r:"4.2★",f:"100% Cotton",u:"Sweat Absorbent"},{b:"Dixcy Scott Alpha",p:450,r:"4.2★",f:"100% Cotton",u:"Sweat Absorbent"}],
+  [{b:"XYXX",p:300,r:"4.2★",f:"Modal",u:"Highly Stretchable"},{b:"Dixcy Scott Alpha",p:600,r:"4.2★",f:"Modal",u:"Ultra Breathable"},{b:"Jockey",p:800,r:"4.5★",f:"Modal",u:"Sweat Absorbent"}],
+  [{b:"Jockey",p:800,r:"3.9★",f:"Blended Cotton",u:"Ultra Breathable"},{b:"Dixcy Scott Alpha",p:600,r:"4.5★",f:"100% Cotton",u:"Ultra Breathable"},{b:"XYXX",p:450,r:"4.2★",f:"100% Cotton",u:"Highly Stretchable"}],
+  [{b:"Jockey",p:600,r:"4.5★",f:"Modal",u:"Sweat Absorbent"},{b:"XYXX",p:300,r:"4.5★",f:"Blended Cotton",u:"Sweat Absorbent"},{b:"Dixcy Scott Alpha",p:450,r:"3.9★",f:"100% Cotton",u:"Ultra Breathable"}],
+  [{b:"Dixcy Scott Alpha",p:300,r:"3.9★",f:"Blended Cotton",u:"Sweat Absorbent"},{b:"Jockey",p:450,r:"4.5★",f:"Modal",u:"Highly Stretchable"},{b:"XYXX",p:800,r:"3.9★",f:"Blended Cotton",u:"Sweat Absorbent"}],
+  [{b:"XYXX",p:600,r:"3.9★",f:"100% Cotton",u:"Highly Stretchable"},{b:"Jockey",p:300,r:"3.9★",f:"Blended Cotton",u:"Sweat Absorbent"},{b:"Dixcy Scott Alpha",p:800,r:"4.2★",f:"100% Cotton",u:"Sweat Absorbent"}],
+  [{b:"Jockey",p:600,r:"3.9★",f:"100% Cotton",u:"Ultra Breathable"},{b:"XYXX",p:300,r:"4.2★",f:"Blended Cotton",u:"Highly Stretchable"},{b:"Dixcy Scott Alpha",p:800,r:"3.9★",f:"Modal",u:"Ultra Breathable"}],
+  [{b:"XYXX",p:300,r:"4.5★",f:"100% Cotton",u:"Highly Stretchable"},{b:"Dixcy Scott Alpha",p:450,r:"4.2★",f:"100% Cotton",u:"Highly Stretchable"},{b:"Jockey",p:800,r:"3.9★",f:"Modal",u:"Sweat Absorbent"}],
+  [{b:"Jockey",p:600,r:"4.2★",f:"Blended Cotton",u:"Ultra Breathable"},{b:"Dixcy Scott Alpha",p:450,r:"3.9★",f:"Modal",u:"Sweat Absorbent"},{b:"XYXX",p:800,r:"4.5★",f:"Blended Cotton",u:"Sweat Absorbent"}],
+  [{b:"Dixcy Scott Alpha",p:450,r:"3.9★",f:"Modal",u:"Ultra Breathable"},{b:"Jockey",p:800,r:"4.5★",f:"100% Cotton",u:"Ultra Breathable"},{b:"XYXX",p:600,r:"4.5★",f:"Modal",u:"Highly Stretchable"}],
 ];
 
-const BRANDS = ["XYXX","Dixcy Scott Alpha","Lux Nitro","Levi's"];
-const USPS   = ["Moisture-Wicking & Quick Dry","Airy & Breathable Mesh","Ultra-Soft & Skin-Friendly","4-Way Stretch & Snug Fit"];
-const PACKS  = ["2 pcs","3 pcs","5 pcs"];
-const RATINGS= ["3.9★","4.2★","4.5★"];
-const NCCS_LIST = ["NCCS A1","NCCS A2","NCCS A3","NCCS B1"];
+const BRANDS  = ["XYXX", "Dixcy Scott Alpha", "Jockey"];
+const USPS    = ["Sweat Absorbent", "Ultra Breathable", "Highly Stretchable"];
+const FABRICS = ["100% Cotton", "Blended Cotton", "Modal"];
+const RATINGS = ["3.9★", "4.2★", "4.5★"];
+const NCCS_LIST = ["NCCS A1", "NCCS A2", "NCCS A3", "NCCS B1"];
 
-// Encode profile → feature vector (11 dims)
+// Feature vector — 9 dimensions, NO index overlap:
+// [0] brand_DixcyScott (1 if Dixcy, 0 otherwise; ref=XYXX)
+// [1] brand_Jockey     (1 if Jockey, 0 otherwise; ref=XYXX)
+// [2] price_norm       (continuous: (p-300)/500)
+// [3] rating_4.2       (1 if 4.2★; ref=3.9★)
+// [4] rating_4.5       (1 if 4.5★; ref=3.9★)
+// [5] fabric_Blended   (1 if Blended Cotton; ref=100% Cotton)
+// [6] fabric_Modal     (1 if Modal; ref=100% Cotton)
+// [7] usp_Breathable   (1 if Ultra Breathable; ref=Sweat Absorbent)
+// [8] usp_Stretchable  (1 if Highly Stretchable; ref=Sweat Absorbent)
 function encode(opt) {
-  const v = new Array(11).fill(0);
-  const bi = BRANDS.indexOf(opt.b);
-  if (bi > 0) v[bi - 1] = 1;
-  v[3] = (opt.p - 250) / 600;
-  const pi = PACKS.indexOf(opt.k);
-  if (pi > 0) v[3 + pi] = 1;
-  const ri = RATINGS.indexOf(opt.r);
-  if (ri > 0) v[5 + ri] = 1;
-  const ui = USPS.indexOf(opt.u);
-  if (ui > 0) v[7 + ui] = 1;
+  const v = new Array(9).fill(0);
+  if (opt.b === "Dixcy Scott Alpha") v[0] = 1;
+  if (opt.b === "Jockey")            v[1] = 1;
+  v[2] = (opt.p - 300) / 500;
+  if (opt.r === "4.2★") v[3] = 1;
+  if (opt.r === "4.5★") v[4] = 1;
+  if (opt.f === "Blended Cotton") v[5] = 1;
+  if (opt.f === "Modal")          v[6] = 1;
+  if (opt.u === "Ultra Breathable")    v[7] = 1;
+  if (opt.u === "Highly Stretchable")  v[8] = 1;
   return v;
 }
 
-// MNL log-likelihood
 function logLik(beta, obs) {
   let ll = 0;
   for (const { vecs, chosen } of obs) {
@@ -58,7 +62,6 @@ function logLik(beta, obs) {
   return ll;
 }
 
-// HB via MCMC (Metropolis-Hastings) for a group of respondents
 function runHB(responses, iterations = 2000, burnin = 500) {
   const obs = [];
   responses.forEach(r => {
@@ -71,17 +74,15 @@ function runHB(responses, iterations = 2000, burnin = 500) {
 
   if (obs.length < 6) return null;
 
-  const nP = 11;
+  const nP = 9;
   let beta = new Array(nP).fill(0);
   let currentLL = logLik(beta, obs);
   const samples = [];
   const stepSize = 0.15;
 
   for (let iter = 0; iter < iterations; iter++) {
-    // Propose new beta
     const proposed = beta.map(b => b + (Math.random() - 0.5) * 2 * stepSize);
     const proposedLL = logLik(proposed, obs);
-    // Accept/reject
     if (Math.log(Math.random()) < proposedLL - currentLL) {
       beta = proposed;
       currentLL = proposedLL;
@@ -89,57 +90,41 @@ function runHB(responses, iterations = 2000, burnin = 500) {
     if (iter >= burnin) samples.push([...beta]);
   }
 
-  // Posterior mean
   const mean = new Array(nP).fill(0);
   samples.forEach(s => s.forEach((v, i) => mean[i] += v));
   const posterior = mean.map(v => v / samples.length);
 
-  const priceCoef = posterior[3];
-  const priceRange = 600;
+  const priceCoef = posterior[2];
+  const priceRange = 500;
 
   function wtp(util) {
     if (!priceCoef || priceCoef >= 0) return 0;
     return Math.round((util / Math.abs(priceCoef)) * priceRange);
   }
 
-  const brandUtils = {
-    "XYXX": 0,
-    "Dixcy Scott Alpha": posterior[0],
-    "Lux Nitro": posterior[1],
-    "Levi's": posterior[2]
-  };
-
-  const uspUtils = {
-    "Moisture-Wicking & Quick Dry": 0,
-    "Airy & Breathable Mesh": posterior[8],
-    "Ultra-Soft & Skin-Friendly": posterior[9],
-    "4-Way Stretch & Snug Fit": posterior[10]
-  };
-
-  const packUtils  = { "2 pcs": 0, "3 pcs": posterior[4], "5 pcs": posterior[5] };
-  const ratingUtils= { "3.9★": 0, "4.2★": posterior[6], "4.5★": posterior[7] };
+  const brandUtils  = { "XYXX": 0, "Dixcy Scott Alpha": posterior[0], "Jockey": posterior[1] };
+  const ratingUtils = { "3.9★": 0, "4.2★": posterior[3], "4.5★": posterior[4] };
+  const fabricUtils = { "100% Cotton": 0, "Blended Cotton": posterior[5], "Modal": posterior[6] };
+  const uspUtils    = { "Sweat Absorbent": 0, "Ultra Breathable": posterior[7], "Highly Stretchable": posterior[8] };
 
   const brandRange  = Math.max(...Object.values(brandUtils))  - Math.min(...Object.values(brandUtils));
-  const uspRange    = Math.max(...Object.values(uspUtils))    - Math.min(...Object.values(uspUtils));
-  const packRange   = Math.max(...Object.values(packUtils))   - Math.min(...Object.values(packUtils));
   const ratingRange = Math.max(...Object.values(ratingUtils)) - Math.min(...Object.values(ratingUtils));
-  const priceImp    = Math.abs(priceCoef) * 0.6;
-  const totalRange  = brandRange + uspRange + packRange + ratingRange + priceImp || 1;
+  const fabricRange = Math.max(...Object.values(fabricUtils)) - Math.min(...Object.values(fabricUtils));
+  const uspRange    = Math.max(...Object.values(uspUtils))    - Math.min(...Object.values(uspUtils));
+  const priceImp    = Math.abs(priceCoef) * 0.5;
+  const totalRange  = brandRange + ratingRange + fabricRange + uspRange + priceImp || 1;
 
   return {
-    brandUtils,
-    uspUtils,
-    packUtils,
-    ratingUtils,
-    priceCoef,
-    brandWTP: Object.fromEntries(Object.entries(brandUtils).map(([k,v]) => [k, wtp(v)])),
-    uspWTP:   Object.fromEntries(Object.entries(uspUtils).map(([k,v])   => [k, wtp(v)])),
+    brandUtils, ratingUtils, fabricUtils, uspUtils, priceCoef,
+    brandWTP:  Object.fromEntries(Object.entries(brandUtils).map(([k,v])  => [k, wtp(v)])),
+    uspWTP:    Object.fromEntries(Object.entries(uspUtils).map(([k,v])    => [k, wtp(v)])),
+    fabricWTP: Object.fromEntries(Object.entries(fabricUtils).map(([k,v]) => [k, wtp(v)])),
     importance: {
-      Brand:     Math.round((brandRange  / totalRange) * 100),
-      USP:       Math.round((uspRange    / totalRange) * 100),
-      "Pack size": Math.round((packRange / totalRange) * 100),
-      Rating:    Math.round((ratingRange / totalRange) * 100),
-      Price:     Math.round((priceImp    / totalRange) * 100),
+      Brand:  Math.round((brandRange  / totalRange) * 100),
+      Rating: Math.round((ratingRange / totalRange) * 100),
+      Fabric: Math.round((fabricRange / totalRange) * 100),
+      USP:    Math.round((uspRange    / totalRange) * 100),
+      Price:  Math.round((priceImp    / totalRange) * 100),
     },
     nRespondents: responses.length,
     nChoices: obs.length
@@ -148,51 +133,31 @@ function runHB(responses, iterations = 2000, burnin = 500) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
   try {
-    // Fetch all responses
-    const { data: responses, error } = await supabase
-      .from("responses")
-      .select("*");
-
+    const { data: responses, error } = await supabase.from("responses").select("*");
     if (error) throw error;
-
     const n = responses.length;
-
-    // Only run if multiple of 10 (or forced via ?force=1)
     if (n % 10 !== 0 && !req.query.force) {
-      return res.status(200).json({ skipped: true, n, message: `Waiting — need ${10 - (n % 10)} more responses` });
+      return res.status(200).json({ skipped: true, n });
     }
-
-    if (n < 10) {
-      return res.status(200).json({ skipped: true, message: "Need at least 10 responses" });
-    }
+    if (n < 10) return res.status(200).json({ skipped: true, message: "Need at least 10 responses" });
 
     const results = {};
-
-    // Overall HB
     results.overall = runHB(responses);
-
-    // NCCS segment cuts
     for (const nccs of NCCS_LIST) {
       const segment = responses.filter(r => r.nccs === nccs);
       results[nccs] = segment.length >= 8 ? runHB(segment) : null;
     }
 
-    // Store results in Supabase
-    const { error: insertError } = await supabase
-      .from("hb_results")
-      .upsert([{
-        id: "latest",
-        n_responses: n,
-        results: JSON.stringify(results),
-        computed_at: new Date().toISOString()
-      }]);
-
+    const { error: insertError } = await supabase.from("hb_results").upsert([{
+      id: "latest",
+      n_responses: n,
+      results: JSON.stringify(results),
+      computed_at: new Date().toISOString()
+    }]);
     if (insertError) throw insertError;
 
     return res.status(200).json({ success: true, n, segments: Object.keys(results) });
-
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });

@@ -16,7 +16,7 @@ function TaskCard({ opt, label, selected, onSelect }) {
       )}
       <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Option {label}</div>
       <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 10 }}>{opt.b}</div>
-      {[["Price", `₹${opt.p}`], ["Pack", opt.k], ["Rating", opt.r]].map(([k, v]) => (
+      {[["Price (pack of 3)", `₹${opt.p}`], ["Rating", opt.r], ["Fabric", opt.f]].map(([k, v]) => (
         <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "0.5px solid #f0f0f0", fontSize: 12 }}>
           <span style={{ color: "#888" }}>{k}</span>
           <span style={{ fontWeight: 600, color: "#111" }}>{v}</span>
@@ -59,7 +59,7 @@ export default function Survey({ onComplete }) {
       <div style={{ marginBottom: "1rem" }}>
         <p style={{ fontSize: 13, fontWeight: 600, color: "#444", marginBottom: 4 }}>Which pack would you buy?</p>
         <div style={{ fontSize: 11, color: "#aaa", background: "#f9f9f9", borderRadius: 6, padding: "6px 10px" }}>
-          All have 10,000+ reviews · Same waistband &amp; durability · 2–3 day delivery
+          All are pack of 3 · 10,000+ reviews · Same waistband &amp; durability · 2–3 day delivery
         </div>
       </div>
 
