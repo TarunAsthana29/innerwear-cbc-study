@@ -16,13 +16,12 @@ function TaskCard({ opt, label, selected, onSelect }) {
       )}
       <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Option {label}</div>
       <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 10 }}>{opt.b}</div>
-      {[["Price (pack of 3)", `₹${opt.p}`], ["Rating", opt.r], ["Fabric", opt.f]].map(([k, v]) => (
+      {[["Price (pack of 3)", `₹${opt.p}`], ["Rating", opt.r], ["Fabric", opt.f], ["USP", opt.u]].map(([k, v]) => (
         <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "0.5px solid #f0f0f0", fontSize: 12 }}>
           <span style={{ color: "#888" }}>{k}</span>
-          <span style={{ fontWeight: 600, color: "#111" }}>{v}</span>
+          <span style={{ fontWeight: 600, color: "#111", textAlign: "right", maxWidth: "60%" }}>{v}</span>
         </div>
       ))}
-      <div style={{ marginTop: 8, background: `${color}15`, borderRadius: 6, padding: "5px 8px", fontSize: 11, color, fontWeight: 600 }}>{opt.u}</div>
     </div>
   );
 }
