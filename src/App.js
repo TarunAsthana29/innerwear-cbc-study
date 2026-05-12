@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 import Screener from "./components/Screener";
 import Assumptions from "./components/Assumptions";
@@ -19,6 +19,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const submittingRef = useRef(false); // synchronous guard — prevents duplicate inserts on slow connections
   const [alreadyDone, setAlreadyDone] = useState(false);
   const [studyClosed, setStudyClosed] = useState(false);
   const [dashAuth, setDashAuth] = useState(false);
@@ -61,6 +62,8 @@ export default function App() {
 
   async function handleComplete(choices) {
     if (studyClosed) return;
+    if (submittingRef.current) return; // synchronous guard — fires before React re-render
+    submittingRef.current = true;
     setSaving(true);
     setSaveError("");
 
@@ -85,6 +88,7 @@ export default function App() {
     if (error) {
       setSaveError("Could not save your response. Error: " + (error.message || "unknown"));
       setSaving(false);
+      submittingRef.current = false; // allow retry on error
       return;
     }
 
@@ -146,7 +150,7 @@ export default function App() {
     );
     if (stage === "screener") return <Screener onComplete={r => { setRespondent(r); setStage("assumptions"); }} />;
     if (stage === "assumptions") return <Assumptions onStart={() => setStage("survey")} onBack={() => setStage("screener")} />;
-    if (stage === "survey") return <Survey onComplete={handleComplete} />;
+    if (stage === "survey") return <Survey onComplete={handleComplete} submitting={saving} />;
     return (
       <div style={{ maxWidth: 400, margin: "4rem auto", textAlign: "center", padding: "0 1rem" }}>
         <div style={{ width: 56, height: 56, background: saveError ? "#fff3f3" : "#f0faf5", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem", fontSize: 24 }}>{saveError ? "⚠️" : "✓"}</div>
