@@ -1,54 +1,5 @@
 import { useState } from "react";
-import { PLATFORMS } from "../data";
-
-const CITY_TIERS = [
-  "Tier 1 — Metro (Mumbai, Delhi, Bengaluru, Hyderabad, Chennai, Pune)",
-  "Tier 2 (Jaipur, Lucknow, Indore, Nagpur, Surat, Vadodara)",
-];
-
-const EDUCATION_LEVELS = [
-  { value: "illiterate",            label: "Illiterate / Just literate" },
-  { value: "school_5",              label: "Studied up to 4th standard" },
-  { value: "school_9",              label: "Studied 5th–9th standard" },
-  { value: "ssc_hsc",               label: "SSC / HSC (10th–12th pass)" },
-  { value: "graduate_general",      label: "Graduate / Postgraduate (general)" },
-  { value: "graduate_professional", label: "Graduate / Postgraduate (professional, e.g. CA, doctor, engineer, MBA)" },
-];
-
-const DURABLES = [
-  "AC",
-  "Car",
-  "Washing machine",
-  "Refrigerator",
-  "Two-wheeler",
-];
-
-// NCCS grid — official MRSI/MRUC mapping (Education × Durables count)
-// Rows = education levels (in order above), Columns = number of durables owned (0,1,2,3,4,5)
-const NCCS_GRID = {
-  illiterate:            ["E3", "E2", "E1", "D2", "D2", "D1"],
-  school_5:              ["E2", "E1", "D2", "D1", "D1", "C2"],
-  school_9:              ["E1", "D2", "D1", "C2", "C1", "B2"],
-  ssc_hsc:               ["D2", "D1", "C2", "C1", "B2", "B1"],
-  graduate_general:      ["D1", "C2", "C1", "B2", "B1", "A3"],
-  graduate_professional: ["D1", "C2", "B2", "B1", "A3", "A2"],
-};
-
-// Special override — owning all 5 durables + professional grad = A1
-function classifyNCCS(education, durableCount) {
-  if (education === "graduate_professional" && durableCount === 5) return "A1";
-  const row = NCCS_GRID[education];
-  if (!row) return null;
-  return row[Math.min(durableCount, 5)];
-}
-
-// Map full NCCS class to study cohort A1/A2/A3/B1 (other classes excluded)
-const NCCS_COHORT_MAP = {
-  "A1": "NCCS A1",
-  "A2": "NCCS A2",
-  "A3": "NCCS A3",
-  "B1": "NCCS B1",
-};
+import { CITY_TIERS, PLATFORMS, EDUCATION_LEVELS, DURABLES, classifyNCCS, NCCS_COHORT_MAP } from "../data";
 
 export default function Screener({ onComplete }) {
   const [form, setForm] = useState({
@@ -79,18 +30,17 @@ export default function Screener({ onComplete }) {
       setErr("Age must be between 18–55"); return;
     }
     if (form.gender !== "Male") {
-      setTerminated("This study is for male respondents only. Thank you for your interest."); return;
+      setTerminated("This study is currently focused on male respondents. Thank you for your interest!"); return;
     }
     if (form.recency !== "Yes") {
-      setTerminated("This study requires participants who have bought innerwear online in the last 6 months. Thank you for your interest."); return;
+      setTerminated("This study requires participants who have bought innerwear online in the last 6 months. Thank you for your interest!"); return;
     }
 
     const nccsRaw = classifyNCCS(form.education, form.durables.length);
     const nccs = NCCS_COHORT_MAP[nccsRaw];
 
-    // Out-of-scope NCCS (B2, C1, C2, D1, D2, E1, E2, E3)
     if (!nccs) {
-      setTerminated("This study targets specific income cohorts. Based on your responses, you don't fall within our current sample. Thank you for your interest!");
+      setTerminated("Based on your responses, you don't fall within our current target sample. Thank you for your interest!");
       return;
     }
 
@@ -127,13 +77,11 @@ export default function Screener({ onComplete }) {
         <p style={{ fontSize: 14, color: "#666", lineHeight: 1.6 }}>Quick screener — takes about a minute. Your answers help us understand preferences by shopper profile.</p>
       </div>
 
-      {/* Age */}
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>Your age</label>
         <input type="number" placeholder="e.g. 28" value={form.age} onChange={e => set("age", e.target.value)} style={inputStyle} />
       </div>
 
-      {/* Gender */}
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>Gender</label>
         <select value={form.gender} onChange={e => set("gender", e.target.value)} style={inputStyle}>
@@ -144,7 +92,6 @@ export default function Screener({ onComplete }) {
         </select>
       </div>
 
-      {/* Recency */}
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>Have you bought innerwear online in the last 6 months?</label>
         <select value={form.recency} onChange={e => set("recency", e.target.value)} style={inputStyle}>
@@ -154,25 +101,21 @@ export default function Screener({ onComplete }) {
         </select>
       </div>
 
-      {/* Education of chief wage earner */}
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Highest education level of the chief wage earner in your household</label>
-        <p style={{ fontSize: 11, color: "#999", margin: "0 0 6px", lineHeight: 1.4 }}>
-          The chief wage earner is the person who contributes most to household expenses.
-        </p>
+        <label style={labelStyle}>Highest education of the chief wage earner in your household</label>
+        <p style={{ fontSize: 11, color: "#999", margin: "0 0 6px", lineHeight: 1.4 }}>The chief wage earner is the person who contributes most to household expenses.</p>
         <select value={form.education} onChange={e => set("education", e.target.value)} style={inputStyle}>
           <option value="">Select…</option>
           {EDUCATION_LEVELS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
 
-      {/* Durables checkbox list */}
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>Which of these does your household own?</label>
         <p style={{ fontSize: 11, color: "#999", margin: "0 0 8px", lineHeight: 1.4 }}>Tick all that apply. Skip any you don't own.</p>
         <div style={{ border: "1.5px solid #e0e0e0", borderRadius: 8, padding: "8px 10px", background: "#fff" }}>
-          {DURABLES.map(d => (
-            <label key={d} style={{ display: "flex", alignItems: "center", padding: "8px 4px", cursor: "pointer", borderBottom: d === DURABLES[DURABLES.length - 1] ? "none" : "0.5px solid #f4f4f4" }}>
+          {DURABLES.map((d, i) => (
+            <label key={d} style={{ display: "flex", alignItems: "center", padding: "8px 4px", cursor: "pointer", borderBottom: i === DURABLES.length - 1 ? "none" : "0.5px solid #f4f4f4" }}>
               <input type="checkbox" checked={form.durables.includes(d)} onChange={() => toggleDurable(d)}
                 style={{ marginRight: 10, width: 16, height: 16, cursor: "pointer" }} />
               <span style={{ fontSize: 14, color: "#333" }}>{d}</span>
@@ -181,7 +124,6 @@ export default function Screener({ onComplete }) {
         </div>
       </div>
 
-      {/* City tier */}
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>City tier</label>
         <select value={form.tier} onChange={e => set("tier", e.target.value)} style={inputStyle}>
@@ -190,7 +132,6 @@ export default function Screener({ onComplete }) {
         </select>
       </div>
 
-      {/* Platform */}
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>Platform you buy innerwear on</label>
         <select value={form.platform} onChange={e => set("platform", e.target.value)} style={inputStyle}>

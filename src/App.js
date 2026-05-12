@@ -4,11 +4,12 @@ import Screener from "./components/Screener";
 import Assumptions from "./components/Assumptions";
 import Survey from "./components/Survey";
 import Dashboard from "./components/Dashboard";
+import { ANALYSIS_THRESHOLDS } from "./data";
 
-const MAX_RESPONSES = 150;
-const RESEARCHER_PASSWORD = "innerwear2026";
-const STORAGE_KEY = "cbc_submitted";
-const DASH_AUTH_KEY = "cbc_dashboard_auth";
+const MAX_RESPONSES = 500;
+const RESEARCHER_PASSWORD = process.env.REACT_APP_RESEARCHER_PASSWORD || "innerwear2026";
+const STORAGE_KEY = "cbc_submitted_v8";
+const DASH_AUTH_KEY = "cbc_dashboard_auth_v8";
 
 export default function App() {
   const [tab, setTab] = useState("survey");
@@ -17,6 +18,7 @@ export default function App() {
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [alreadyDone, setAlreadyDone] = useState(false);
   const [studyClosed, setStudyClosed] = useState(false);
   const [dashAuth, setDashAuth] = useState(false);
@@ -60,27 +62,40 @@ export default function App() {
   async function handleComplete(choices) {
     if (studyClosed) return;
     setSaving(true);
+    setSaveError("");
+
     const row = {
       respondent_id: respondent.id,
       age: +respondent.age,
-      nccs: respondent.nccs,
-      nccs_raw: respondent.nccs_raw,
-      tier: respondent.tier,
-      platform: respondent.platform,
       gender: respondent.gender,
       recency: respondent.recency,
       education: respondent.education,
       durables_count: respondent.durables_count,
       durables_list: respondent.durables_list,
+      nccs: respondent.nccs,
+      nccs_raw: respondent.nccs_raw,
+      tier: respondent.tier,
+      platform: respondent.platform,
       choices: JSON.stringify(choices),
       completed_at: new Date().toISOString()
     };
-    await supabase.from("responses").insert([row]);
+
+    const { error } = await supabase.from("responses").insert([row]);
+
+    if (error) {
+      setSaveError("Could not save your response. Error: " + (error.message || "unknown"));
+      setSaving(false);
+      return;
+    }
+
     localStorage.setItem(STORAGE_KEY, "1");
 
-    const { data: countData } = await supabase.from("responses").select("id", { count: "exact", head: true });
-    const total = countData?.length || 0;
-    if (total % 10 === 0) fetch("/api/run-hb", { method: "POST" }).catch(() => {});
+    // Trigger pooled MNL run at correct threshold (uses Supabase count metadata — fixed bug)
+    const { count } = await supabase.from("responses").select("id", { count: "exact", head: true });
+    const total = count || 0;
+    if (total >= ANALYSIS_THRESHOLDS.HB_TRIGGER_MIN && total % 10 === 0) {
+      fetch("/api/run-hb", { method: "POST" }).catch(() => {});
+    }
 
     setSaving(false);
     setStage("done");
@@ -134,9 +149,9 @@ export default function App() {
     if (stage === "survey") return <Survey onComplete={handleComplete} />;
     return (
       <div style={{ maxWidth: 400, margin: "4rem auto", textAlign: "center", padding: "0 1rem" }}>
-        <div style={{ width: 56, height: 56, background: "#f0faf5", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem", fontSize: 24 }}>✓</div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 8 }}>Thank you!</h2>
-        <p style={{ fontSize: 14, color: "#666", lineHeight: 1.7 }}>{saving ? "Saving your responses..." : "Your responses have been recorded. Thank you for participating!"}</p>
+        <div style={{ width: 56, height: 56, background: saveError ? "#fff3f3" : "#f0faf5", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem", fontSize: 24 }}>{saveError ? "⚠️" : "✓"}</div>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 8 }}>{saveError ? "Something went wrong" : "Thank you!"}</h2>
+        <p style={{ fontSize: 14, color: "#666", lineHeight: 1.7 }}>{saving ? "Saving your responses..." : (saveError || "Your responses have been recorded. Thank you for participating!")}</p>
       </div>
     );
   };
@@ -170,7 +185,7 @@ export default function App() {
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", minHeight: "100vh", background: "#fafafa" }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <div style={{ borderBottom: "1px solid #ebebeb", background: "#fff", padding: "0 1rem" }}>
-        <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ padding: "14px 0", fontSize: 13, fontWeight: 700, color: "#111" }}>
             Innerwear CBC Study
             <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 500, background: studyClosed ? "#fff3f3" : "#f0faf5", color: studyClosed ? "#c0392b" : "#0F6E56", padding: "2px 8px", borderRadius: 20 }}>

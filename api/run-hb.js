@@ -20,22 +20,16 @@ const TASKS = [
   [{b:"Dixcy Scott Alpha",p:450,r:"3.9★",f:"Modal",u:"Ultra Breathable"},{b:"Jockey",p:800,r:"4.5★",f:"100% Cotton",u:"Ultra Breathable"},{b:"XYXX",p:600,r:"4.5★",f:"Modal",u:"Highly Stretchable"}],
 ];
 
-const BRANDS  = ["XYXX", "Dixcy Scott Alpha", "Jockey"];
-const USPS    = ["Sweat Absorbent", "Ultra Breathable", "Highly Stretchable"];
-const FABRICS = ["100% Cotton", "Blended Cotton", "Modal"];
-const RATINGS = ["3.9★", "4.2★", "4.5★"];
 const NCCS_LIST = ["NCCS A1", "NCCS A2", "NCCS A3", "NCCS B1"];
+const SEGMENT_MIN = 30;
+const TRIGGER_MIN = 50;
 
 // Feature vector — 9 dimensions, NO index overlap:
-// [0] brand_DixcyScott (1 if Dixcy, 0 otherwise; ref=XYXX)
-// [1] brand_Jockey     (1 if Jockey, 0 otherwise; ref=XYXX)
-// [2] price_norm       (continuous: (p-300)/500)
-// [3] rating_4.2       (1 if 4.2★; ref=3.9★)
-// [4] rating_4.5       (1 if 4.5★; ref=3.9★)
-// [5] fabric_Blended   (1 if Blended Cotton; ref=100% Cotton)
-// [6] fabric_Modal     (1 if Modal; ref=100% Cotton)
-// [7] usp_Breathable   (1 if Ultra Breathable; ref=Sweat Absorbent)
-// [8] usp_Stretchable  (1 if Highly Stretchable; ref=Sweat Absorbent)
+// [0] brand_DixcyScott  [1] brand_Jockey  (ref=XYXX)
+// [2] price_norm
+// [3] rating_4.2  [4] rating_4.5  (ref=3.9)
+// [5] fabric_Blended  [6] fabric_Modal  (ref=100% Cotton)
+// [7] usp_Breathable  [8] usp_Stretchable  (ref=Sweat Absorbent)
 function encode(opt) {
   const v = new Array(9).fill(0);
   if (opt.b === "Dixcy Scott Alpha") v[0] = 1;
@@ -137,16 +131,15 @@ module.exports = async function handler(req, res) {
     const { data: responses, error } = await supabase.from("responses").select("*");
     if (error) throw error;
     const n = responses.length;
-    if (n % 10 !== 0 && !req.query.force) {
-      return res.status(200).json({ skipped: true, n });
+    if (n < TRIGGER_MIN && !req.query.force) {
+      return res.status(200).json({ skipped: true, n, message: `Need at least ${TRIGGER_MIN} responses` });
     }
-    if (n < 10) return res.status(200).json({ skipped: true, message: "Need at least 10 responses" });
 
     const results = {};
     results.overall = runHB(responses);
     for (const nccs of NCCS_LIST) {
       const segment = responses.filter(r => r.nccs === nccs);
-      results[nccs] = segment.length >= 8 ? runHB(segment) : null;
+      results[nccs] = segment.length >= SEGMENT_MIN ? runHB(segment) : null;
     }
 
     const { error: insertError } = await supabase.from("hb_results").upsert([{

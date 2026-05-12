@@ -1,8 +1,8 @@
 export default function Assumptions({ onStart, onBack }) {
   const assumptions = [
     { icon: "⭐", title: "10,000+ verified reviews", body: "All brands shown have the same number of reviews on Amazon / Flipkart — so your choice is not influenced by review volume." },
-    { icon: "📦", title: "Pack of 3 — always", body: "Every option is a pack of 3 pieces. Price shown is for the full pack. This is held constant so you can focus on brand, price, rating, fabric, and the functional claim." },
-    { icon: "🧵", title: "Same waistband & durability", body: "Waistband quality and overall durability are identical across all options. These are controlled so your preference reflects fabric comfort and brand." },
+    { icon: "📦", title: "Pack of 3 — always", body: "Every option is a pack of 3 pieces. The price shown is for the full pack. Pack size is held constant so you focus on brand, price, rating, fabric, and the functional claim." },
+    { icon: "🧵", title: "Same waistband & durability", body: "Waistband quality and overall durability are identical across all options. These are controlled so your preference reflects fabric, comfort and brand — not construction differences." },
     { icon: "🚚", title: "2–3 day delivery for all", body: "Delivery time is the same for every option. No same-day or next-day advantage for any brand." },
     { icon: "🏷️", title: "Genuine products only", body: "Assume all options are authentic, sold by the brand directly or via authorised sellers — no counterfeits or grey market products." },
   ];
